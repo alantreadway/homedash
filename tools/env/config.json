@@ -1,11 +1,17 @@
 {
   "dev": {
-    "API": "https://demo.com"
+    "evohome": {
+      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+    }
   },
   "prod": {
-    "API": "https://prod.com"
+    "evohome": {
+      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+    }
   },
   "staging": {
-    "API": "https://staging.com"
+    "evohome": {
+      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+    }
   }
 }
