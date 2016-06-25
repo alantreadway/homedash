@@ -11,7 +11,7 @@ import { EvohomeService, Location } from './evohome.service';
   directives: [REACTIVE_FORM_DIRECTIVES]
 })
 export class EvohomeComponent {
-  private locations: Observable<Location>;
+  private locations: Observable<Location[]>;
 
   private evohomeService: EvohomeService;
 

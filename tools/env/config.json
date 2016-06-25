@@ -1,17 +1,20 @@
 {
   "dev": {
     "evohome": {
-      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+      "OAuth": "https://tccna.honeywell.com/Auth/OAuth/Token",
+      "API": "https://tccna.honeywell.com/WebAPI/emea/api/v1"
     }
   },
   "prod": {
     "evohome": {
-      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+      "OAuth": "https://tccna.honeywell.com/Auth/OAuth/Token",
+      "API": "https://tccna.honeywell.com/WebAPI/emea/api/v1"
     }
   },
   "staging": {
     "evohome": {
-      "API": "https://rs.alarmnet.com/TotalConnectComfort/WebAPI/api"
+      "OAuth": "https://tccna.honeywell.com/Auth/OAuth/Token",
+      "API": "https://tccna.honeywell.com/WebAPI/emea/api/v1"
     }
   }
 }

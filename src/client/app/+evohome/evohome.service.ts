@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { Headers, Http } from '@angular/http';
 import { AsyncSubject } from 'rxjs/AsyncSubject';
-import { Observable } from 'rxjs/Observable';
+import { Injectable } from '@angular/core';
+import { Headers, Http, Response, RequestOptionsArgs } from '@angular/http';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { Observable } from 'rxjs';
 
 import { Config } from '../shared/index';
 
@@ -18,63 +19,93 @@ export class EvohomeService {
     this.http = http;
   }
 
-  public getLocations(): Observable<Location> {
-    let result = new AsyncSubject<Location>();
-
+  public getLocations(): Observable<Location[]> {
     if (!this.session) {
       this.session = this.login();
     }
 
-    this.session.subscribe(
-      (session) => {
-        let userId = session.userInfo.userId;
+    return this.session
+      .flatMap((session: Session) => {
+        let userId = session.user_id;
         let requestOpts = {
-          headers: new Headers({
-            'content-type': 'application/json',
-            'sessionId': session.sessionId,
-          }),
+          headers: this.getHeaders(session),
         };
 
         return this.http
           .get(
-            `${Config.evohome.API}/locations?userId=${userId}&allData=True`,
+            `${Config.evohome.API}/location/installationInfo?userId=${userId}&`
+            + `includeTemperatureControlSystems=True`,
             requestOpts
           )
-          .map((response) => {
-            return <Location> response.json();
-          })
-          .subscribe((location) => {
-            result.next(location);
-            result.complete();
-          });
-
+      })
+      .map((response: Response) => {
+        return <Location[]> response.json();
       });
-
-      return result;
   }
 
   private login(): Observable<Session> {
+    let result = new ReplaySubject<Session>(1);
+
+    let requestOpts = <RequestOptionsArgs> { headers: this.getHeaders() };
     let postData = {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+      'Host': 'rs.alarmnet.com/',
+      'Cache-Control': 'no-store no-cache',
+      'Pragma': 'no-cache',
+      'grant_type': 'password',
+      'scope': 'EMEA-V1-Basic EMEA-V1-Anonymous EMEA-V1-Get-Current-User-Account',
       'Username': localStorage.getItem('evohome-username'),
       'Password': localStorage.getItem('evohome-password'),
-      'ApplicationId': '91db1612-73fd-4500-91b2-e63b069b185c'
-    };
-    let requestOpts = {
-      headers: new Headers({'content-type': 'application/json'}),
+      'Connection': 'Keep-Alive'
     }
+
     return this.http
-      .post(`${Config.evohome.API}/Session`, postData, requestOpts)
-      .map((response) => {
+      .post(`${Config.evohome.OAuth}`, JSON.stringify(postData), requestOpts)
+      .map((response: Response) => {
         return <Session> response.json();
+      })
+      .flatMap((session) => { return this.getUserId(session); });
+  }
+
+  private getUserId(session: Session): Observable<Session> {
+    let requestOpts = <RequestOptionsArgs> {
+      headers: this.getHeaders(session),
+    };
+    return this.http.get(`${Config.evohome.API}/userAccount`)
+      .map((response: Response) => <AccountInfo> response.json())
+      .flatMap((accountInfo) => {
+        session.user_id = accountInfo.userId;
+
+        // Create a ReplaySubject so that future subscribers always receive a value
+        let result = new ReplaySubject<Session>(1);
+        result.next(session);
+
+        return result;
       });
+  }
+
+  private getHeaders(session?: Session): Headers {
+    if (session) {
+      return new Headers({
+        'Authorization': 'bearer ' + session.access_token,
+        'applicationId': 'b013aa26-9724-4dbd-8897-048b9aada249',
+        'Accept': 'application/json, application/xml, text/json, text/x-json, text/javascript, text/xml'
+      });
+    }
+    return new Headers({
+      'Authorization': 'Basic YjAxM2FhMjYtOTcyNC00ZGJkLTg4OTctMDQ4YjlhYWRhMjQ5OnRlc3Q=',
+      'Accept': 'application/json, application/xml, text/json, text/x-json, text/javascript, text/xml'
+    });
   }
 }
 
 interface Session {
-  userInfo: {
-    userId: string,
-  },
-  sessionId: string,
+  access_token: string,
+  user_id: string,
+}
+
+interface AccountInfo {
+  userId: string,
 }
 
 export interface Location {

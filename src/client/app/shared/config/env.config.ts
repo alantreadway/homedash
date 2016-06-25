@@ -2,6 +2,7 @@
 // depending on your app specific config.
 export interface IConfig {
   evohome: {
+    OAuth: string,
     API: string
   }
 }
